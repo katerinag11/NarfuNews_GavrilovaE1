@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+// ИСПРАВЛЕНО: используем относительный путь
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3010/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,7 +11,7 @@ const apiClient = axios.create({
 class UserService {
   async getCurrentUser(recordId) {
     try {
-      console.log('Запрос пользователя:', `http://localhost:3010/api/users/${recordId}`);
+      console.log('Запрос: /api/users/' + recordId);
       const response = await apiClient.get(`/users/${recordId}`);
       return response.data;
     } catch (error) {

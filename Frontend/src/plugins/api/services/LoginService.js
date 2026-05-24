@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Используем порт 3010, где запущен бэкенд
+// ИСПРАВЛЕНО: используем относительный путь, а не localhost
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3010/api',
+  baseURL: '/api',  // ← Уберите localhost:3010, оставьте просто /api
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,11 +11,13 @@ const apiClient = axios.create({
 class LoginService {
   async authorizationUser(email, password) {
     try {
-      console.log('Отправка на:', 'http://localhost:3010/api/login');
+      console.log('Отправка на: /api/login');
       const response = await apiClient.post('/login', {
         login: email,
         password: password
       });
+      
+      console.log('Ответ:', response.data);
       
       if (response.data.success) {
         return {
