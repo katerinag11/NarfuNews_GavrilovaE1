@@ -24,6 +24,10 @@ import sotr from './src/icons/sotr.vue';
 import user from './src/icons/user.vue';
 import down from './src/icons/down.vue';
 
+
+import LoginService from './src/plugins/api/services/LoginService';
+import UserService from './src/plugins/api/services/UserService';
+
 const vuetify = createVuetify({
   components,
   directives,
@@ -50,7 +54,6 @@ const vuetify = createVuetify({
       sotr: sotr,
       user: user,
       down: down,
-
     },
     sets: {
       mdi,
@@ -59,7 +62,11 @@ const vuetify = createVuetify({
 });
 
 const app = createApp(App);
-registerServices(app);
+
+
+app.provide('loginService', LoginService);
+app.provide('userService', UserService);
+
 app.use(vuetify);
 app.use(router);
 app.mount('#app');

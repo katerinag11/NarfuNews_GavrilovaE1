@@ -1,17 +1,19 @@
-import {API_BASE_URL, fetchData} from "@src/plugins/api/apiConfig.js";
+import axios from 'axios';
+
+const apiClient = axios.create({ baseURL: '/api', headers: { 'Content-Type': 'application/json' } });
 
 class LoginService {
-    constructor() {
-    }
-
-    //Авторизация пользователя
-    async authorizationUser(email, password) {
-    return fetchData(`${API_BASE_URL}/login/auth?email=${email}&password=${password}`);
-    }
+  async authorizationUser(email, password) {
+    const response = await apiClient.post('/login', { login: email, password: password });
+    if (response.data.success) return { userId: response.data.recordId, user: response.data.user };
+    throw new Error(response.data.message);
+  }
+  async registerUser(userData) {
+    const response = await apiClient.post('/login/register', {
+      email: userData.email, password: userData.password, name: userData.name,
+      lastName: userData.lastName, secondName: userData.secondName || ''
+    });
+    return response.data;
+  }
 }
-
-// Класс для работы с API пользователей
-const service = new LoginService(API_BASE_URL);
-
-// Экспортируем экземпляр
-export default service;
+export default new LoginService();
