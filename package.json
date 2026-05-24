@@ -1,0 +1,29 @@
+{
+  "name": "express-simple-starter",
+  "private": true,
+  "scripts": {
+    "start": "node ./Server/index.js",
+    "dev": "vite",
+    "dev:all": "concurrently \"npm run start\" \"npm run dev\""
+  },
+  "dependencies": {
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/font": "^7.4.47",
+    "@mdi/js": "^7.4.47",
+    "@types/node": "^25.6.0",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "@vue/tsconfig": "^0.9.1",
+    "axios": "^1.15.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "vite": "^8.0.8",
+    "vue": "^3.5.33",
+    "vue-router": "^5.0.4",
+    "vuetify": "^4.0.5",
+    "vuex": "^4.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
