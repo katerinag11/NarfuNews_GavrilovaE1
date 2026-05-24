@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-// Тестовые данные
+
 const users = [
   { login: "test", email: "test@example.com", password: "123456", name: "Иван", lastName: "Иванов", secondName: "Иванович", userId: "1" },
   { login: "kat", email: "kat@example.com", password: "123456", name: "Екатерина", lastName: "Гаврилова", secondName: "Юрьевна", userId: "2" }
 ];
 
-// POST /api/login - авторизация
 router.post('/', (req, res) => {
   console.log('Получен POST запрос на /api/login');
   console.log('Тело запроса:', req.body);
@@ -33,7 +32,6 @@ router.post('/', (req, res) => {
   }
 });
 
-// POST /api/login/register - регистрация
 router.post('/register', (req, res) => {
   console.log('Получен POST запрос на /api/login/register');
   const { email, password, name, lastName, secondName } = req.body;
