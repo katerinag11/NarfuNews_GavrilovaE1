@@ -17,12 +17,12 @@
         <input class="search" placeholder="Поиск документа" />
       </div>
 
-      <!-- Кнопка Войти для неавторизованных -->
+
       <button v-if="!isLoggedIn" class="login-button" @click="openLoginDialog">
         Войти
       </button>
 
-      <!-- Меню для авторизованного пользователя -->
+     
       <div v-else class="user-menu" @click.stop="toggleMenu" ref="userMenu">
         <div class="text-logo">{{ userName }}</div>
         <v-icon>$down</v-icon>
@@ -39,7 +39,6 @@
       </div>
     </div>
 
-    <!-- Диалог авторизации -->
     <LoginDialog ref="loginDialog" @login-success="onLoginSuccess" />
   </div>
 </template>

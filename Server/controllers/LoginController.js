@@ -3,7 +3,7 @@ const router = express.Router();
 
 // Тестовые данные
 const users = [
-  { login: "test", email: "test@example.com", password: "123456", name: "Тест", lastName: "Тестовый", secondName: "Тестович", userId: "1" },
+  { login: "test", email: "test@example.com", password: "123456", name: "Иван", lastName: "Иванов", secondName: "Иванович", userId: "1" },
   { login: "kat", email: "kat@example.com", password: "123456", name: "Екатерина", lastName: "Гаврилова", secondName: "Юрьевна", userId: "2" }
 ];
 
