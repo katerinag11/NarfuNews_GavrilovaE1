@@ -11,7 +11,7 @@
     <v-card>
       <v-card-title> Авторизация </v-card-title>
       <v-card-subtitle>
-        <v-tabs v-model="selectedTab" color="primary" item-text="title">
+        <v-tabs v-model="selectedTab" color="primary">
           <v-tab
             v-for="(item, index) in tabItems"
             :key="index"
@@ -48,7 +48,7 @@
         v-model="login"
         :rules="[(value) => !!value || 'Поле обязательно для заполнения']"
         hide-details="auto"
-        label="Логин"
+        label="Логин (Email)"
         variant="solo-filled"
       />
       <v-text-field
@@ -81,7 +81,7 @@
     <v-btn
       v-bind="props"
       variant="text"
-      :text="currentUser.fullShortName"
+      :text="userDisplayName"
       style="color: white !important"
     />
   </template>
@@ -98,151 +98,173 @@
 </div>
 </template>
 
-<script lang="ts">
-import { mapGetters } from 'vuex';
-
+<script>
 export default {
 name: 'UserMenu',
-data: () => ({
-  unRegisteredUser: true,
-  authorizationUserDialog: false,
-  login: '',
-  password: '',
-  selectedTab: 1,
-  secondName: '',
-  lastName: '',
-  name: '',
-}),
+inject: ['loginService', 'userService'],
+data() {
+  return {
+    unRegisteredUser: true,
+    authorizationUserDialog: false,
+    login: '',
+    password: '',
+    selectedTab: 1,
+    secondName: '',
+    lastName: '',
+    name: '',
+    loading: false,
+  };
+},
 computed: {
-  ...mapGetters('usersStore', ['currentUser']),
+  userDisplayName() {
+    const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+    const fullName = `${user.Surname || ''} ${user.Name || ''} ${user.Patronymic || ''}`.trim();
+    return fullName || 'Пользователь';
+  },
   menuList() {
     return [
       {
-        value: 1,
         title: 'Настройки',
         action: () => {
           this.$router.push('/control-news');
         },
       },
       {
-        value: 2,
         title: 'Выход',
         action: () => {
-          this.$store.dispatch('usersStore/INIT_LOGOUT');
+          this.logout();
         },
       },
     ];
   },
   tabItems() {
     return [
-      {
-        value: 1,
-        title: 'Войти',
-      },
-      {
-        value: 2,
-        title: 'Регистрация',
-      },
+      { value: 1, title: 'Войти' },
+      { value: 2, title: 'Регистрация' },
     ];
   },
 },
 mounted() {
-  const localStorageUser = localStorage.getItem('currentUser');
-  if (!localStorageUser) {
-    this.unRegisteredUser = true;
-  } else {
-    this.unRegisteredUser = false;
-    this.$store.dispatch(
-      'usersStore/INIT_CURRENT_USER',
-      parseInt(JSON.parse(localStorageUser)
-      );
+  this.checkAuth();
+},
+watch: {
+  currentUser: {
+    handler() {
+      this.checkAuth();
+    },
+    immediate: true,
+  },
+},
+methods: {
+  checkAuth() {
+    const recordId = sessionStorage.getItem('userRecordId');
+    const currentUser = sessionStorage.getItem('currentUser');
+    
+    if (recordId && currentUser) {
+      this.unRegisteredUser = false;
+    } else {
+      this.unRegisteredUser = true;
     }
   },
-  watch: {
-    currentUser: {
-      handler(newValue, oldValue) {
-        if (Object.keys(newValue)?.length) this.unRegisteredUser = false;
-        else {
-          console.log(newValue);
-          this.unRegisteredUser = true;
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
-  },
-  methods: {
-    async onAuthorization() {
   
+  async onAuthorization() {
+    this.loading = true;
+    
+    try {
       if (this.selectedTab === 1) {
+        // Вход
         if (!this.login || !this.password) {
-          return alert('Не заполнены обязательные поля');
+          alert('Заполните все обязательные поля');
+          return;
         }
-        await this.$store
-          .dispatch('usersStore/INIT_AUTORIZATION', {
-            login: this.login,
-            password: this.password,
-          })
-          .then((res) => {
-            console.log(res);
-          })
-          .finally(() => {
-            this.authorizationUserDialog = false;
-          });
+        
+        const result = await this.loginService.authorizationUser(this.login, this.password);
+        
+        if (result.userId) {
+          sessionStorage.setItem('userRecordId', result.userId);
+          sessionStorage.setItem('currentUser', JSON.stringify(result.user));
+          this.unRegisteredUser = false;
+          this.authorizationUserDialog = false;
+          this.login = '';
+          this.password = '';
+          alert('Вход выполнен успешно!');
+          this.$emit('login-success');
+        }
       } else {
+        // Регистрация
         if (!this.login || !this.password || !this.name || !this.lastName) {
-          return alert('Не заполнены обязательные поля');
+          alert('Заполните все обязательные поля');
+          return;
         }
-        await this.$store
-          .dispatch('usersStore/INIT_REGISTRATION', {
-            login: this.login,
-            password: this.password,
-            name: this.name,
-            lastName: this.lastName,
-            secondName: this.secondName,
-          })
-          .then((res) => {
-            console.log(res);
-          })
-          .finally(() => {
-            this.authorizationUserDialog = false;
-          });
+        
+        const result = await this.loginService.registerUser({
+          email: this.login,
+          password: this.password,
+          name: this.name,
+          lastName: this.lastName,
+          secondName: this.secondName
+        });
+        
+        if (result.success) {
+          alert('Регистрация успешна! Теперь войдите в систему.');
+          this.selectedTab = 1;
+          this.login = '';
+          this.password = '';
+          this.name = '';
+          this.lastName = '';
+          this.secondName = '';
+        }
       }
-    },
-    onCloseDialog() {
-      this.login = '';
-      this.password = '';
-      this.authorizationUserDialog = false;
-    },
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert(error.response?.data?.message || 'Произошла ошибка');
+    } finally {
+      this.loading = false;
+    }
   },
-  };
-  </script>
   
-  <style scoped>
-  .popular-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0px;
-    padding: 8px 16px;
-    background-color: white;
-    color: black;
-    cursor: pointer;
-    font-size: 16px;
-    outline: none;
-    border: none;
-    width: 100%;
-    text-align: left;
-    }
-    
-    .popular-button:hover {
-    background-color: #81c5db;
-    }
-    
-    .popular-button img {
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-    }
-    
-  </style>
+  logout() {
+    sessionStorage.removeItem('userRecordId');
+    sessionStorage.removeItem('currentUser');
+    this.unRegisteredUser = true;
+    this.$router.push('/');
+  },
   
+  onCloseDialog() {
+    this.login = '';
+    this.password = '';
+    this.name = '';
+    this.lastName = '';
+    this.secondName = '';
+    this.authorizationUserDialog = false;
+  },
+},
+};
+</script>
+
+<style scoped>
+.popular-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0px;
+  padding: 8px 16px;
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  font-size: 16px;
+  outline: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.popular-button:hover {
+  background-color: #81c5db;
+}
+
+.popular-button img {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+}
+</style>

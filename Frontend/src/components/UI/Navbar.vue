@@ -7,7 +7,7 @@
     </button>
 
     <div class="navbar-icons logo">
-    <v-icon >$logaIcon</v-icon>
+      <v-icon>$logaIcon</v-icon>
       <div class="text-logo">Новости</div>
     </div>
 
@@ -17,46 +17,109 @@
         <input class="search" placeholder="Поиск документа" />
       </div>
 
-      <div class="user-menu" @click.stop="tMenu" ref="userMenu">
-        <div class="text-logo">Гаврилова Е.Ю.</div>
-        <v-icon >$down</v-icon>
-        <div v-if="MenuOpen" class="dropdown-menu" @click.stop>
-          <div class="settings-item">
-            <v-icon >$SettingsIcon</v-icon>
+      <!-- Кнопка Войти для неавторизованных -->
+      <button v-if="!isLoggedIn" class="login-button" @click="openLoginDialog">
+        Войти
+      </button>
+
+      <!-- Меню для авторизованного пользователя -->
+      <div v-else class="user-menu" @click.stop="toggleMenu" ref="userMenu">
+        <div class="text-logo">{{ userName }}</div>
+        <v-icon>$down</v-icon>
+        <div v-if="menuOpen" class="dropdown-menu" @click.stop>
+          <div class="settings-item" @click="goToSettings">
+            <v-icon>$SettingsIcon</v-icon>
             Настройки
           </div>
-          <div class="exit-item">
-            <v-icon >$ExitIcon</v-icon>
+          <div class="exit-item" @click="logout">
+            <v-icon>$ExitIcon</v-icon>
             Выйти
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Диалог авторизации -->
+    <LoginDialog ref="loginDialog" @login-success="onLoginSuccess" />
   </div>
 </template>
 
 <script>
+import LoginDialog from './LoginDialog.vue';
+
 export default {
   name: 'Navbar',
-
+  components: { LoginDialog },
+  inject: ['userService'],
+  emits: ['toggle-sidebar'],
   data() {
     return {
-      MenuOpen: false,
+      menuOpen: false,
+      isLoggedIn: false,
+      userName: 'Гаврилова Е.Ю.',
     };
   },
   methods: {
-    tMenu() {
-      this.MenuOpen = !this.MenuOpen;
+    toggleMenu() {
+      this.menuOpen = !this.menuOpen;
     },
     closeMenu(e) {
       if (this.$refs.userMenu && !this.$refs.userMenu.contains(e.target)) {
-        this.MenuOpen = false;
+        this.menuOpen = false;
+      }
+    },
+    openLoginDialog() {
+      this.$refs.loginDialog.open();
+    },
+    onLoginSuccess(userData) {
+      this.isLoggedIn = true;
+      this.userName = userData.userName || 'Гаврилова Е.Ю.';
+      console.log('Успешный вход, userName:', this.userName);
+    },
+    goToSettings() {
+      this.$router.push('/control-news');
+      this.menuOpen = false;
+    },
+    logout() {
+      sessionStorage.removeItem('userRecordId');
+      sessionStorage.removeItem('userName');
+      sessionStorage.removeItem('currentUser');
+      this.isLoggedIn = false;
+      this.userName = 'Гаврилова Е.Ю.';
+      this.menuOpen = false;
+      console.log('Выход выполнен');
+    },
+    async checkAuth() {
+      const recordId = sessionStorage.getItem('userRecordId');
+      console.log('Проверка авторизации, recordId:', recordId);
+      
+      if (recordId) {
+        const storedName = sessionStorage.getItem('userName');
+        if (storedName) {
+          this.isLoggedIn = true;
+          this.userName = storedName;
+          console.log('Загружено из sessionStorage:', this.userName);
+        } else {
+          try {
+            const userData = await this.userService.getCurrentUser(recordId);
+            console.log('Данные пользователя из API:', userData);
+            const fields = userData.fields;
+            const fullName = `${fields.Surname || ''} ${fields.Name || ''} ${fields.Patronymic || ''}`.trim();
+            sessionStorage.setItem('userName', fullName);
+            this.userName = fullName || 'Гаврилова Е.Ю.';
+            this.isLoggedIn = true;
+            console.log('Загружено из API:', this.userName);
+          } catch (err) {
+            console.error('Ошибка загрузки пользователя:', err);
+            sessionStorage.removeItem('userRecordId');
+          }
+        }
       }
     },
   },
-  emits: ['toggle-sidebar'],
   mounted() {
     document.addEventListener('click', this.closeMenu);
+    this.checkAuth();
   },
   beforeUnmount() {
     document.removeEventListener('click', this.closeMenu);
@@ -138,6 +201,22 @@ export default {
   color: white;
 }
 
+.login-button {
+  background: white;
+  color: #01579b;
+  border: none;
+  padding: 5px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.login-button:hover {
+  background: #e0e0e0;
+}
+
 .user-menu {
   display: flex;
   align-items: center;
@@ -145,15 +224,11 @@ export default {
   cursor: pointer;
   padding: 5px 10px;
   border-radius: 4px;
+  color: white;
 }
 
-.menu-icon {
-  margin-left: 8px;
-  transition: transform 0.2s ease;
-}
-
-.menu-icon.rotated {
-  transform: rotate(180deg);
+.user-menu:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dropdown-menu {
@@ -186,5 +261,4 @@ export default {
   background: #ddeaf8;
   color: #1976d2;
 }
-
 </style>
