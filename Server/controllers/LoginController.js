@@ -3,14 +3,18 @@ const fs = require('fs').promises;
 const path = require('path');
 const router = express.Router();
 
-// Тестовые данные
-const users = [
-  { login: "test", email: "test@example.com", password: "123456", name: "Тест", lastName: "Тестовый", secondName: "Тестович", userId: "1" },
-  { login: "kat", email: "kat@example.com", password: "123456", name: "Екатерина", lastName: "Гаврилова", secondName: "Юрьевна", userId: "2" }
-];
+const usersFilePath = path.join(__dirname, '../../users.json');
 
-// POST /api/login - авторизация
-router.post('/', (req, res) => {
+async function readUsers() {
+  const raw = await fs.readFile(usersFilePath, 'utf-8');
+  return JSON.parse(raw);
+}
+
+async function writeUsers(users) {
+  await fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), 'utf-8');
+}
+
+router.post('/', async (req, res) => {
   console.log('Получен POST запрос на /api/login');
   console.log('Тело запроса:', req.body);
 
@@ -38,8 +42,7 @@ router.post('/', (req, res) => {
   }
 });
 
-// POST /api/login/register - регистрация
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
   console.log('Получен POST запрос на /api/login/register');
 
   try {
