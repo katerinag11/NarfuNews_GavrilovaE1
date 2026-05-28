@@ -25,5 +25,14 @@
     "lastName": "Гаврилова",
     "secondName": "Юрьевна",
     "userId": "3"
+  },
+  {
+    "login": "h@gmail.com",
+    "email": "h@gmail.com",
+    "password": "123456789",
+    "name": "Екатерина",
+    "lastName": "Гаврилова",
+    "secondName": "",
+    "userId": "4"
   }
 ]
