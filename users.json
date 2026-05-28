@@ -34,5 +34,13 @@
     "lastName": "Гаврилова",
     "secondName": "",
     "userId": "4"
+  },
+  {
+    "login": "d@exemple.com",
+    "email": "d@exemple.com",
+    "password": "123456789",
+    "name": "Катюшка",
+    "lastName": "Катя",
+    "userId": "5"
   }
 ]
